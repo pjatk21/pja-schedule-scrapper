@@ -1,0 +1,41 @@
+{
+  "name": "pja-schedule-scrapper",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "@types/jsdom": "^16.2.13",
+    "@types/node": "^16.11.10",
+    "jsdom": "^18.1.1",
+    "node-json-db": "^1.4.1",
+    "puppeteer": "^11.0.0",
+    "ts-node": "^10.4.0",
+    "typescript": "^4.5.2"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^5.4.0",
+    "@typescript-eslint/parser": "^5.4.0",
+    "eslint": "^8.3.0",
+    "eslint-config-prettier": "^8.3.0",
+    "prettier": "^2.5.0"
+  },
+  "scripts": {
+    "start": "node --loader ts-node/esm src/index.ts"
+  },
+  "prettier": {
+    "semi": true,
+    "quoteProps": "as-needed",
+    "singleQuote": true
+  },
+  "eslintConfig": {
+    "parser": "@typescript-eslint/parser",
+    "plugins": [
+      "@typescript-eslint"
+    ],
+    "extends": [
+      "eslint:recommended",
+      "plugin:@typescript-eslint/recommended",
+      "prettier"
+    ]
+  }
+}
