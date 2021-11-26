@@ -33,15 +33,16 @@ async function main() {
 
   await page.goto('https://planzajec.pjwstk.edu.pl/PlanOgolny3.aspx')
   // set date
+  /*
   const datePicker = await page.$('#DataPicker_dateInput')
   await datePicker?.click()
   await datePicker?.press('Backspace')
   await datePicker?.type('2021-11-25')
   await datePicker?.press('Enter')
-  await page.waitForTimeout(2000)
+  await page.waitForTimeout(2000) */
   // find all subjects
-  // const subjects = await page.$x('//*[matches(@id, "\d+;r")]');
-  const subjects = await page.$x("//td[contains(@id, ';')]")
+  // const subjects = await page.$x('//*[matches(@id, "\d+;r")]'); // puppeteer does not support XPath 2.0
+  const subjects = await page.$x("//td[contains(@id, ';')]") // works so far
 
   // enable request interception
   await page.setRequestInterception(true)
@@ -51,13 +52,21 @@ async function main() {
   const progressBar = new SingleBar({})
   progressBar.start(subjects.length, 0)
 
+
   for (const subject of subjects) {
     await subject.hover()
-    const response = await page.waitForResponse(
-      'https://planzajec.pjwstk.edu.pl/PlanOgolny3.aspx'
-    )
-    await scrapDetails(response)
-    // console.log(`${++progress}/${subjects.length}`);
+    try {
+      const response = await page.waitForResponse(
+        'https://planzajec.pjwstk.edu.pl/PlanOgolny3.aspx',
+        {timeout: 800}
+      )
+      await scrapDetails(response)
+      await page.waitForTimeout(150) // poll rate limit
+    } catch (e) {
+      // console.warn(e)
+      await page.waitForTimeout(1000) // poll rate limit aggressive
+    }
+
     progressBar.update(++progress)
   }
   progressBar.stop()
