@@ -4,8 +4,10 @@
   "main": "index.js",
   "license": "MIT",
   "dependencies": {
+    "@types/cli-progress": "^3.9.2",
     "@types/jsdom": "^16.2.13",
     "@types/node": "^16.11.10",
+    "cli-progress": "^3.9.1",
     "jsdom": "^18.1.1",
     "node-json-db": "^1.4.1",
     "puppeteer": "^11.0.0",
@@ -23,22 +25,8 @@
     "start": "node --loader ts-node/esm src/index.ts"
   },
   "prettier": {
-    "semi": true,
+    "semi": false,
     "quoteProps": "as-needed",
     "singleQuote": true
-  },
-  "eslintConfig": {
-    "parser": "@typescript-eslint/parser",
-    "plugins": [
-      "@typescript-eslint"
-    ],
-    "extends": [
-      "eslint:recommended",
-      "plugin:@typescript-eslint/recommended",
-      "prettier"
-    ],
-    "rules": {
-      "no-useless-escape": "off"
-    }
   }
 }
