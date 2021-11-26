@@ -10,7 +10,7 @@ const store = new JsonDB(new Config('store', true, true))
 async function scrapDetails(event: HTTPResponse) {
   if (
     !event.ok() ||
-    event.url() != 'https://planzajec.pjwstk.edu.pl/PlanOgolny.aspx'
+    event.url() != 'https://planzajec.pjwstk.edu.pl/PlanOgolny3.aspx'
   )
     return;
   const responses = (await event.text()).split('|');
@@ -26,12 +26,13 @@ async function scrapDetails(event: HTTPResponse) {
 
 async function main() {
   const browser = await puppeteer.launch({
-    headless: true,
+    headless: false,
   });
   const page = await browser.newPage();
 
-  await page.goto('https://planzajec.pjwstk.edu.pl/PlanOgolny.aspx');
-  const subjects = await page.$$('.rsAptSubject');
+  await page.goto('https://planzajec.pjwstk.edu.pl/PlanOgolny3.aspx');
+  // const subjects = await page.$x('//*[matches(@id, "\d+;r")]');
+  const subjects = await page.$x('//td[contains(@id, \';\')]');
 
   await page.setRequestInterception(true);
   page.on('request', async (event) => event.continue());
@@ -42,7 +43,7 @@ async function main() {
   for (const subject of subjects) {
     console.log(`${++progress}/${subjects.length}`);
     await subject.hover();
-    await page.waitForTimeout(2500);
+    await page.waitForTimeout(600);
   }
 }
 
