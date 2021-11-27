@@ -6,9 +6,13 @@
   "dependencies": {
     "@types/cli-progress": "^3.9.2",
     "@types/jsdom": "^16.2.13",
+    "@types/lodash": "^4.14.177",
     "@types/node": "^16.11.10",
     "cli-progress": "^3.9.1",
+    "got": "^11.8.3",
     "jsdom": "^18.1.1",
+    "lodash": "^4.17.21",
+    "moment": "^2.29.1",
     "node-json-db": "^1.4.1",
     "puppeteer": "^11.0.0",
     "ts-node": "^10.4.0",
@@ -22,7 +26,8 @@
     "prettier": "^2.5.0"
   },
   "scripts": {
-    "start": "node --loader ts-node/esm src/index.ts"
+    "preload": "node --loader ts-node/esm src/index.ts",
+    "fetch": "node --loader ts-node/esm src/gotthem.ts"
   },
   "prettier": {
     "semi": false,
