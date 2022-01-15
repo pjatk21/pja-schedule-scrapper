@@ -1,6 +1,6 @@
 import { JsonDB } from 'node-json-db'
 import { Browser } from 'puppeteer'
-import { serializeOutput } from './util'
+import { serializeOutput } from '../util'
 import 'dotenv/config'
 
 export default class Scrapper {
