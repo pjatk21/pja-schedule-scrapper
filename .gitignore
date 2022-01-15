@@ -120,3 +120,4 @@ dist
 # WebStorm
 .idea/
 /store.json
+database.sqlite
