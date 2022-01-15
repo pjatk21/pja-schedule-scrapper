@@ -9,6 +9,7 @@
     "@types/lodash": "^4.14.177",
     "@types/node": "^16.11.10",
     "cli-progress": "^3.9.1",
+    "dotenv": "^12.0.3",
     "got": "^11.8.3",
     "jsdom": "^18.1.1",
     "lodash": "^4.17.21",
@@ -22,16 +23,13 @@
     "@typescript-eslint/eslint-plugin": "^5.4.0",
     "@typescript-eslint/parser": "^5.4.0",
     "eslint": "^8.3.0",
-    "eslint-config-prettier": "^8.3.0",
-    "prettier": "^2.5.0"
+    "eslint-config-standard": "^16.0.3",
+    "eslint-plugin-import": "^2.25.4",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^6.0.0"
   },
   "scripts": {
     "preload": "node --loader ts-node/esm src/index.ts",
     "fetch": "node --loader ts-node/esm src/gotthem.ts"
-  },
-  "prettier": {
-    "semi": false,
-    "quoteProps": "as-needed",
-    "singleQuote": true
   }
 }
