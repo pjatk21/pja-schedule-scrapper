@@ -6,5 +6,8 @@
     ],
     "extends": [
         "standard"
-    ]
+    ],
+    "rules": {
+        "dot-notation": "warn"
+    }
 }
