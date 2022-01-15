@@ -29,7 +29,6 @@
     "eslint-plugin-promise": "^6.0.0"
   },
   "scripts": {
-    "preload": "node --loader ts-node/esm src/index.ts",
-    "fetch": "node --loader ts-node/esm src/gotthem.ts"
+    "dump": "node --loader ts-node/esm src/index.ts"
   }
 }
