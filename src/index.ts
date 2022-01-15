@@ -1,12 +1,8 @@
 import puppeteer from 'puppeteer'
 import Scrapper from './scrapping/scrapper'
 import 'dotenv/config'
-import { createConnection } from 'typeorm'
 
 async function index () {
-  // init db connection
-  await createConnection()
-
   // create browser session for data scrapping
   const browser = await puppeteer.launch({
     headless: true

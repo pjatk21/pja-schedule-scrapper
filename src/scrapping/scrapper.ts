@@ -1,17 +1,14 @@
 import { Browser } from 'puppeteer'
 import { serializeOutput } from '../util'
 import 'dotenv/config'
-import { Connection, getConnection } from 'typeorm'
 import moment from 'moment'
-import { ScheduleEntry } from '../entity/Schedule'
+import { ScheduleEntry } from '../interfaces'
 
 export default class Scrapper {
   private readonly browser: Browser
-  private readonly conn?: Connection
 
   constructor (browser: Browser) {
     this.browser = browser
-    this.conn = getConnection()
   }
 
   async fetchDay (date: string) {
@@ -37,21 +34,17 @@ export default class Scrapper {
     page.on('request', async (event) => event.continue())
 
     // store entries for debug purposes
-    const entries: Record<any, any>[] = []
+    const entries: ScheduleEntry[] = []
 
     // create listener for each entry
     page.on('response', async event => {
       if (event.url() === 'https://planzajec.pjwstk.edu.pl/PlanOgolny3.aspx') {
         const data = serializeOutput(await event.text()) ?? {}
-        entries.push(data)
-        await this.conn?.manager.save(
-          this.dataToEntity(data)
+        entries.push(
+          this.dataToEntry(data)
         )
       }
     })
-
-    // clear database before dumping
-    await ScheduleEntry.delete({ dateString: date })
 
     // setup progress bar
     let progress = 0
@@ -70,19 +63,18 @@ export default class Scrapper {
     return { date, entries }
   }
 
-  dataToEntity (obj: Record<string, string>): ScheduleEntry {
-    const entry = new ScheduleEntry()
-    entry.begin = moment(`${obj['Data zajęć']} ${obj['Godz. rozpoczęcia']}`, 'DD.MM.YYYY HH:mm:ss').toDate()
-    entry.end = moment(`${obj['Data zajęć']} ${obj['Godz. zakończenia']}`, 'DD.MM.YYYY HH:mm:ss').toDate()
-    entry.dateString = moment(`${obj['Data zajęć']} ${obj['Godz. zakończenia']}`, 'DD.MM.YYYY HH:mm:ss').format('YYYY-MM-DD')
-    entry.type = obj['Typ zajęć']
-    entry.code = obj['Kody przedmiotów']
-    entry.name = obj['Nazwy przedmiotów']
-    entry.room = obj['Sala']
-    entry.tutor = obj['Dydaktycy']
-    entry.groups = obj['Grupy']
-    entry.building = obj['Budynek']
-
-    return entry
+  dataToEntry (obj: Record<string, string>): ScheduleEntry {
+    return {
+      begin: moment(`${obj['Data zajęć']} ${obj['Godz. rozpoczęcia']}`, 'DD.MM.YYYY HH:mm:ss').toDate(),
+      end: moment(`${obj['Data zajęć']} ${obj['Godz. zakończenia']}`, 'DD.MM.YYYY HH:mm:ss').toDate(),
+      dateString: moment(`${obj['Data zajęć']} ${obj['Godz. zakończenia']}`, 'DD.MM.YYYY HH:mm:ss').format('YYYY-MM-DD'),
+      type: obj['Typ zajęć'],
+      code: obj['Kody przedmiotów'],
+      name: obj['Nazwy przedmiotów'],
+      room: obj['Sala'],
+      tutor: obj['Dydaktycy'],
+      groups: obj['Grupy'],
+      building: obj['Budynek']
+    }
   }
 }
