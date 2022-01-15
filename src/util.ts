@@ -1,17 +1,4 @@
 import { JSDOM } from 'jsdom'
-import moment from 'moment'
-
-export interface ScheduleEntry {
-  name?: string
-  code: string
-  type: string
-  groups?: string
-  building?: string
-  room?: string
-  begin: Date
-  end: Date
-  tutor?: string
-}
 
 export function multiLinesIntoObject (input: string): Record<string, string> {
   const lines = input.split('\n')
@@ -38,18 +25,4 @@ export function serializeOutput (data: string) {
     .trim()
 
   return multiLinesIntoObject(lines)
-}
-
-export function remapObjects (obj: Record<string, string>): ScheduleEntry {
-  const begin = moment(`${obj['Data zajęć']} ${obj['Godz. rozpoczęcia']}`, 'DD.MM.YYYY HH:mm:ss').toDate()
-  const end = moment(`${obj['Data zajęć']} ${obj['Godz. zakończenia']}`, 'DD.MM.YYYY HH:mm:ss').toDate()
-  return {
-    type: obj['Typ zajęć'],
-    code: obj['Kody przedmiotów'],
-    name: obj['Nazwy przedmiotów'],
-    // eslint-disable-next-line dot-notation
-    tutor: obj['Dydaktycy'],
-    begin,
-    end
-  }
 }
