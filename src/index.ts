@@ -1,71 +1,83 @@
-import puppeteer, { HTTPRequest, HTTPResponse } from "puppeteer";
-import * as Process from 'process'
-import { JSDOM } from 'jsdom'
-import { multilinesIntoObject } from './util'
+import puppeteer from 'puppeteer'
+import { serializeOutput } from './util'
 import { JsonDB } from 'node-json-db'
 import { Config } from 'node-json-db/dist/lib/JsonDBConfig'
 import { SingleBar } from 'cli-progress'
-import { writeFile } from "fs/promises";
+import { writeFile } from 'fs/promises'
+import 'dotenv/config'
 
 const store = new JsonDB(new Config('store', true, true))
 
-async function main(date: string, category?: string) {
+async function fetchAndDump (date: string) {
   const browser = await puppeteer.launch({
-    headless: false,
+    // headless: process.env.ENV === 'prod',
+    headless: true,
     defaultViewport: {
       width: 1600,
-      height: 900,
+      height: 900
     }
   })
+
   const page = await browser.newPage()
-
   await page.goto('https://planzajec.pjwstk.edu.pl/PlanOgolny3.aspx')
-  // set date
 
+  // set date
   const datePicker = await page.$('#DataPicker_dateInput')
   await datePicker?.click()
   await datePicker?.press('Backspace')
   await datePicker?.type(date)
   await datePicker?.press('Enter')
-  await page.waitForTimeout(2000)
+  await page.waitForTimeout(parseInt(process.env.TIMEOUT_PAGELOAD ?? '1000'))
 
   // find all subjects
   // const subjects = await page.$x('//*[matches(@id, "\d+;r")]'); // puppeteer does not support XPath 2.0
-  const subjects = await page.$x("//td[contains(@id, ';')]") // works so far
+  const subjects = process.env.ENV === 'dev' ? (await page.$x("//td[contains(@id, ';')]")).slice(0, 20) : await page.$x("//td[contains(@id, ';')]") // works so far
 
   // enable request interception
   await page.setRequestInterception(true)
   page.on('request', async (event) => event.continue())
 
+  // store entries for debug purposes
+  const entries: Record<any, any>[] = []
+
+  // create listener for each entry
+  page.on('response', async event => {
+    if (event.url() === 'https://planzajec.pjwstk.edu.pl/PlanOgolny3.aspx') {
+      const data = serializeOutput(await event.text()) ?? {}
+      entries.push(data)
+      store.push(`/raw/${data['Data zajęć']}[]`, entries)
+    }
+  })
+
+  // clear database before dumping
+  try {
+    store.push(`/raw/${date}`, [])
+  } catch (e) {
+    console.warn(e)
+  }
+
+  // setup progress bar
   let progress = 0
   const progressBar = new SingleBar({})
   progressBar.start(subjects.length, 0)
 
-  const requests: HTTPRequest[] = []
-
-  page.on('request',  event => {
-    if (event.url() === 'https://planzajec.pjwstk.edu.pl/PlanOgolny3.aspx') requests.push(event)
-    // event.continue()
-  })
-
-  for (const subject of subjects.slice(0, 10)) {
+  // iterate over entries
+  for (const subject of subjects) {
     await subject.hover()
     try {
-      await page.waitForResponse('https://planzajec.pjwstk.edu.pl/PlanOgolny3.aspx', {timeout: 1000})
+      await page.waitForResponse('https://planzajec.pjwstk.edu.pl/PlanOgolny3.aspx', { timeout: parseInt(process.env.TIMEOUT_INTERCEPTION ?? '10000') })
     } catch (e) {
-      // console.debug('another', e)
+      console.warn(e)
     }
-    progressBar.update(requests.length)
+    progressBar.update(++progress)
   }
   progressBar.stop()
 
-  await writeFile('result.json', JSON.stringify(
-    requests.map(r => { return {
-      headers: r.headers(),
-      body: r.postData(),
-      response: r.response()?.text() ?? null
-    }})
-  ))
+  if (process.env.ENV === 'dev') {
+    await writeFile('dump.json', JSON.stringify(
+      entries, undefined, 2
+    ))
+  }
 }
 
-main('2021-11-29').then(() => Process.exit())
+fetchAndDump('2022-01-14').then(() => process.exit())
