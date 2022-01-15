@@ -20,9 +20,7 @@
       "eslint-config-standard": "^16.0.3",
       "eslint-plugin-import": "^2.25.4",
       "eslint-plugin-node": "^11.1.0",
-      "eslint-plugin-promise": "^6.0.0",
-      "ts-node": "3.3.0",
-      "typescript": "3.3.3333"
+      "eslint-plugin-promise": "^6.0.0"
    },
    "scripts": {
       "dump": "node --loader ts-node/esm src/index.ts"
