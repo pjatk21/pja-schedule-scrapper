@@ -1,5 +1,12 @@
 # PJA schedule scrapper
 
+## Install
+```shell
+yarn add https://github.com/pjatk21/pja-schedule-scrapper.git
+# or
+npm i https://github.com/pjatk21/pja-schedule-scrapper.git
+```
+
 ## What's in the box?
  - Scrapper
 
