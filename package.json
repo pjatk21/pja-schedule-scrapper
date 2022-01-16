@@ -1,12 +1,10 @@
 {
    "name": "pja-schedule-scrapper",
    "version": "1.0.0",
-   "main": "index.js",
    "license": "MIT",
    "dependencies": {
       "@types/jsdom": "^16.2.13",
       "@types/node": "^16.11.10",
-      "dotenv": "^12.0.3",
       "jsdom": "^18.1.1",
       "moment": "^2.29.1",
       "puppeteer": "^11.0.0",
@@ -23,6 +21,6 @@
       "eslint-plugin-promise": "^6.0.0"
    },
    "scripts": {
-      "dump": "node --loader ts-node/esm src/index.ts"
+      "build": "eslint --fix && tsc"
    }
 }

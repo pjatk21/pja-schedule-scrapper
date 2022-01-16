@@ -1,6 +1,5 @@
 import { Browser } from 'puppeteer'
 import { serializeOutput } from '../util'
-import 'dotenv/config'
 import moment from 'moment'
 import { ScheduleEntry } from '../interfaces'
 
@@ -26,7 +25,7 @@ export default class Scrapper {
     // find all subjects
     let subjects = await page.$x("//td[contains(@id, ';')]") // works so far, but really fragile solution
     if (process.env.ENV === 'dev') {
-      subjects = subjects.slice(0, 20)
+      subjects = subjects.slice(0, 5)
     }
 
     // enable request interception
@@ -63,7 +62,7 @@ export default class Scrapper {
     return { date, entries }
   }
 
-  dataToEntry (obj: Record<string, string>): ScheduleEntry {
+  private dataToEntry (obj: Record<string, string>): ScheduleEntry {
     return {
       begin: moment(`${obj['Data zajęć']} ${obj['Godz. rozpoczęcia']}`, 'DD.MM.YYYY HH:mm:ss').toDate(),
       end: moment(`${obj['Data zajęć']} ${obj['Godz. zakończenia']}`, 'DD.MM.YYYY HH:mm:ss').toDate(),
@@ -71,10 +70,10 @@ export default class Scrapper {
       type: obj['Typ zajęć'],
       code: obj['Kody przedmiotów'],
       name: obj['Nazwy przedmiotów'],
-      room: obj['Sala'],
-      tutor: obj['Dydaktycy'],
-      groups: obj['Grupy'],
-      building: obj['Budynek']
+      room: obj.Sala,
+      tutor: obj.Dydaktycy,
+      groups: obj.Grupy,
+      building: obj.Budynek
     }
   }
 }
