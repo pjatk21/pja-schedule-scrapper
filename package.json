@@ -3,7 +3,9 @@
    "version": "1.0.0",
    "main": "dist/index.js",
    "types": "dist/index.d.ts",
-   "files": ["./dist/"],
+   "files": [
+      "./dist/"
+   ],
    "license": "MIT",
    "dependencies": {
       "@types/jsdom": "^16.2.13",
@@ -18,9 +20,9 @@
       "@typescript-eslint/eslint-plugin": "^5.4.0",
       "@typescript-eslint/parser": "^5.4.0",
       "eslint": "^8.3.0",
-      "eslint-config-standard": "^16.0.3",
+      "eslint-config-standard": "https://github.com/standard/eslint-config-standard",
       "eslint-plugin-import": "^2.25.4",
-      "eslint-plugin-node": "^11.1.0",
+      "eslint-plugin-n": "^14.0.0",
       "eslint-plugin-promise": "^6.0.0"
    },
    "scripts": {
