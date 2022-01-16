@@ -2,7 +2,7 @@
 
 ## Install
 ```shell
-yarn add https://github.com/pjatk21/pja-schedule-scrapper.git
+yarn add https://github.com/pjatk21/pja-scrapper.git
 # or
 npm i pja-scrapper
 ```
