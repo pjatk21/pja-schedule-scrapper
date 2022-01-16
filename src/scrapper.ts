@@ -1,7 +1,7 @@
 import { Browser } from 'puppeteer'
-import { serializeOutput } from '../util'
+import { serializeOutput } from './util'
 import moment from 'moment'
-import { ScheduleEntry } from '../interfaces'
+import { ScheduleEntry } from './interfaces'
 
 export default class Scrapper {
   private readonly browser: Browser

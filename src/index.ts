@@ -1,5 +1,5 @@
 import puppeteer from 'puppeteer'
-import Scrapper from './scrapping/scrapper'
+import Scrapper from './scrapper'
 export { ScheduleEntry } from './interfaces'
 export { Scrapper }
 
