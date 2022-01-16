@@ -24,7 +24,8 @@ export default class Scrapper {
 
     // find all subjects
     let subjects = await page.$x("//td[contains(@id, ';')]") // works so far, but really fragile solution
-    if (process.env.ENV === 'dev') {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('small slice to 5')
       subjects = subjects.slice(0, 5)
     }
 

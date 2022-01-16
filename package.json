@@ -3,6 +3,7 @@
    "version": "1.0.0",
    "main": "dist/index.js",
    "types": "dist/index.d.ts",
+   "files": ["./dist/**/*"],
    "license": "MIT",
    "dependencies": {
       "@types/jsdom": "^16.2.13",
@@ -23,6 +24,7 @@
       "eslint-plugin-promise": "^6.0.0"
    },
    "scripts": {
-      "build": "tsc"
+      "prepare": "tsc",
+      "build": "eslint --fix && tsc"
    }
 }
