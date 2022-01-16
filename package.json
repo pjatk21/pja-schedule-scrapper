@@ -1,6 +1,8 @@
 {
    "name": "pja-schedule-scrapper",
    "version": "1.0.0",
+   "main": "dist/index.js",
+   "types": "dist/index.d.ts",
    "license": "MIT",
    "dependencies": {
       "@types/jsdom": "^16.2.13",
@@ -21,6 +23,6 @@
       "eslint-plugin-promise": "^6.0.0"
    },
    "scripts": {
-      "build": "eslint --fix && tsc"
+      "build": "tsc"
    }
 }
