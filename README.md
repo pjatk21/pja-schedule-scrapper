@@ -2,9 +2,9 @@
 
 ## Install
 ```shell
-yarn add https://github.com/pjatk21/pja-schedule-scrapper.git
+yarn add https://github.com/pjatk21/pja-scrapper.git
 # or
-npm i https://github.com/pjatk21/pja-schedule-scrapper.git
+npm i pja-scrapper
 ```
 
 ## What's in the box?
@@ -16,7 +16,7 @@ npm i https://github.com/pjatk21/pja-schedule-scrapper.git
 ## Example
 
 ```ts
-import { fetchDay, fetchDays } from 'pja-schedule-scrapper'
+import { fetchDay, fetchDays } from 'pja-scrapper'
 
 (async () => {
   const a = await fetchDay('2022-01-17')
