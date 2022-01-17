@@ -1,6 +1,6 @@
-import { Browser } from 'puppeteer'
+import puppeteer, { Browser } from 'puppeteer'
 import { serializeOutput } from './util'
-import moment from 'moment'
+import { DateTime } from 'luxon'
 import { ScheduleEntry } from './interfaces'
 
 export default class Scrapper {
@@ -8,6 +8,17 @@ export default class Scrapper {
 
   constructor (browser: Browser) {
     this.browser = browser
+  }
+
+  public static async dockerRuntime () {
+    const browser = await puppeteer.launch({
+      headless: true,
+      args: ['--disable-dev-shm-usage']
+    })
+    return {
+      browser,
+      scrapper: new Scrapper(browser)
+    }
   }
 
   async fetchDay (date: string) {
@@ -64,10 +75,13 @@ export default class Scrapper {
   }
 
   private dataToEntry (obj: Record<string, string>): ScheduleEntry {
+    const begin = DateTime.fromFormat(`${obj['Data zajęć']} ${obj['Godz. rozpoczęcia']}`, 'DD.MM.YYYY').toJSDate()
+    const end = DateTime.fromFormat(`${obj['Data zajęć']} ${obj['Godz. zakończenia']}`, 'DD.MM.YYYY').toJSDate()
+    const dateString = DateTime.fromFormat(`${obj['Data zajęć']} ${obj['Godz. zakończenia']}`, 'DD.MM.YYYY HH:mm:ss').toFormat('YYYY-MM-DD')
     return {
-      begin: moment(`${obj['Data zajęć']} ${obj['Godz. rozpoczęcia']}`, 'DD.MM.YYYY HH:mm:ss').toDate(),
-      end: moment(`${obj['Data zajęć']} ${obj['Godz. zakończenia']}`, 'DD.MM.YYYY HH:mm:ss').toDate(),
-      dateString: moment(`${obj['Data zajęć']} ${obj['Godz. zakończenia']}`, 'DD.MM.YYYY HH:mm:ss').format('YYYY-MM-DD'),
+      begin,
+      end,
+      dateString,
       type: obj['Typ zajęć'],
       code: obj['Kody przedmiotów'],
       name: obj['Nazwy przedmiotów'],
