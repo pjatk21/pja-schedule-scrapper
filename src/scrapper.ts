@@ -2,9 +2,11 @@ import puppeteer, { Browser } from 'puppeteer'
 import { serializeOutput } from './util'
 import { DateTime } from 'luxon'
 import { ScheduleEntry } from './interfaces'
+import pino from 'pino'
 
 export default class Scrapper {
   private readonly browser: Browser
+  private readonly log = pino()
 
   constructor (browser: Browser) {
     this.browser = browser
@@ -36,8 +38,8 @@ export default class Scrapper {
     // find all subjects
     let subjects = await page.$x("//td[contains(@id, ';')]") // works so far, but really fragile solution
     if (process.env.NODE_ENV === 'development') {
-      console.log('small slice to 5')
       subjects = subjects.slice(0, 5)
+      this.log.debug('Reduced subjects to:', subjects.length)
     }
 
     // enable request interception
@@ -59,25 +61,27 @@ export default class Scrapper {
 
     // setup progress bar
     let progress = 0
+    let errored = 0
 
     // iterate over entries
     for (const subject of subjects) {
-      await subject.hover()
       try {
-        await page.waitForResponse('https://planzajec.pjwstk.edu.pl/PlanOgolny3.aspx', { timeout: 12000 })
+        await subject.hover()
+        await page.waitForResponse('https://planzajec.pjwstk.edu.pl/PlanOgolny3.aspx', { timeout: 20000 })
       } catch (e) {
-        console.warn(e)
+        errored++
+        this.log.warn(e)
       }
-      console.debug(date, ++progress, 'of', subjects.length)
+      this.log.info({ date }, `Downloaded ${++progress} of ${subjects.length} (${Math.round(progress / subjects.length * 100)}%)`)
     }
 
-    return { date, entries }
+    return { date, entries, errorRate: errored / subjects.length }
   }
 
   private dataToEntry (obj: Record<string, string>): ScheduleEntry {
-    const begin = DateTime.fromFormat(`${obj['Data zajęć']} ${obj['Godz. rozpoczęcia']}`, 'DD.MM.YYYY').toJSDate()
-    const end = DateTime.fromFormat(`${obj['Data zajęć']} ${obj['Godz. zakończenia']}`, 'DD.MM.YYYY').toJSDate()
-    const dateString = DateTime.fromFormat(`${obj['Data zajęć']} ${obj['Godz. zakończenia']}`, 'DD.MM.YYYY HH:mm:ss').toFormat('YYYY-MM-DD')
+    const begin = DateTime.fromFormat(`${obj['Data zajęć']} ${obj['Godz. rozpoczęcia']}`, 'dd.MM.yyyy HH:mm:ss').toJSDate()
+    const end = DateTime.fromFormat(`${obj['Data zajęć']} ${obj['Godz. zakończenia']}`, 'dd.MM.yyyy HH:mm:ss').toJSDate()
+    const dateString = DateTime.fromFormat(obj['Data zajęć'], 'dd.MM.yyyy').toFormat('yyyy-MM-dd')
     return {
       begin,
       end,
