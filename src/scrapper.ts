@@ -4,6 +4,7 @@ import { DateTime } from 'luxon'
 import { ScheduleEntry } from './interfaces'
 import pino from 'pino'
 import { ScheduleScrappingOptions } from './types'
+import { GroupCoder } from './groupCoder'
 
 /**
  * Class for handling scraping schedule.
@@ -88,7 +89,8 @@ export default class ScheduleScrapper {
         await page.waitForResponse('https://planzajec.pjwstk.edu.pl/PlanOgolny3.aspx', { timeout: options.maxTimeout ?? 20000 })
         this.log.info({ date }, `Downloaded ${++progress} of ${subjects.length} (${Math.round(progress / subjects.length * 100)}%)`)
       } catch (e) {
-        if (e instanceof puppeteer.TimeoutError) {
+        // @ts-expect-error
+        if (e.name === 'TimeoutError') {
           errored.push(subject)
           this.log.warn(e)
         }
@@ -101,14 +103,15 @@ export default class ScheduleScrapper {
       while (errored.length) {
         const subject = errored.pop()!
         try {
-          this.log.debug({ subject }, 'Retrying fetching subject...')
+          this.log.debug({ subject })
           await subject.hover()
-          await page.waitForResponse('https://planzajec.pjwstk.edu.pl/PlanOgolny3.aspx', { timeout: options.maxTimeout ?? 20000 })
+          await page.waitForResponse('https://planzajec.pjwstk.edu.pl/PlanOgolny3.aspx', { timeout: 30000 })
+          this.log.info('Retry succeeded!')
         } catch (e) {
           this.log.error({ exception: e }, 'Failed to fetch timeouted subject!')
         }
+        this.log.info({ date }, `Fetch retried (${Math.round(++progress / subjects.length * 100)}%)`)
       }
-      this.log.info({ date }, `Fetch retried (${Math.round(++progress / subjects.length * 100)}%)`)
     }
 
     return { date, entries, errored, errorRate: errored.length / subjects.length }
@@ -127,7 +130,7 @@ export default class ScheduleScrapper {
       name: obj['Nazwy przedmiotów'],
       room: obj.Sala,
       tutor: obj.Dydaktycy,
-      groups: obj.Grupy,
+      groups: obj.Grupy?.split(', ').map(gc => new GroupCoder().decode(gc)),
       building: obj.Budynek
     }
   }

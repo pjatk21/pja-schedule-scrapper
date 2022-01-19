@@ -1,3 +1,5 @@
+/* eslint-disable no-unused-vars */
+
 /**
  * Includes settings (date, repeat timeouts etc.) for scraping schedule.
  */

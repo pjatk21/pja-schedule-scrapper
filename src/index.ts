@@ -1,7 +1,7 @@
 import puppeteer from 'puppeteer'
 import ScheduleScrapper from './scrapper'
 export { ScheduleEntry } from './interfaces'
-export { ScheduleScrapper as Scrapper }
+export { ScheduleScrapper }
 
 export async function fetchDay (date?: string) {
   const browser = await puppeteer.launch({

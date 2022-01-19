@@ -3,10 +3,10 @@ import { GroupDecoded, PJALevel, PJALocations, PJAMasterSubjects, PJAStudyMode }
 export class InvalidGroupCodeError extends Error {}
 
 export class GroupCoder {
-  private static readonly rule = /(?<lmk>[WGB][IGAZLK][szin]) ((?<lvl>I{1,3}|PD)\.(?<sem>\d)|(?<itn>ITN)) (-|(?<spec>(OB\.)?\w+)) (?<grp>\d+)(?<grpl>\w)/gm
+  private readonly rule = /(?<lmk>[WGB][IGAZLK][sni]) ((?<lvl>I{1,3}|PD)\.(?<sem>\d)|(?<itn>ITN)) (-|(?<spec>(OB\.)?\w+)) (?<grp>\d+)(?<grpl>\w)/
 
-  public static decode (groupString: string) {
-    const { groups } = GroupCoder.rule.exec(groupString) || {}
+  public decode (groupString: string) {
+    const { groups } = this.rule.exec(groupString) || {}
     if (!groups) throw new InvalidGroupCodeError(`Invalid group code: ${groupString}`)
     const { lmk, lvl, sem, spec, grp, grpl, itn } = groups
     const groupObject: GroupDecoded = {
@@ -16,13 +16,10 @@ export class GroupCoder {
       level: lvl as PJALevel,
       semester: sem ? parseInt(sem) : undefined,
       itn: !!itn,
-      specialization: spec, 
+      specialization: spec,
       groupNumber: parseInt(grp),
       groupLetter: grpl
     }
-    console.log({ ...groups }, groupObject)
     return groupObject
   }
 }
-
-GroupCoder.decode('WIs I.1 - 40c')
