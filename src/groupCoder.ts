@@ -1,4 +1,4 @@
-import { GroupDecoded, PJALevel, PJALocations, PJAMasterSubjects, PJAStudyMode } from "./types"
+import { GroupDecoded, PJALevel, PJALocations, PJAMasterSubjects, PJAStudyMode } from './types'
 
 export class InvalidGroupCodeError extends Error {}
 
@@ -16,7 +16,7 @@ export class GroupCoder {
       level: lvl as PJALevel,
       semester: sem ? parseInt(sem) : undefined,
       itn: !!itn,
-      specialization: spec,
+      specialization: spec, 
       groupNumber: parseInt(grp),
       groupLetter: grpl
     }
