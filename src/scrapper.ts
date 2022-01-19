@@ -3,8 +3,12 @@ import { serializeOutput } from './util'
 import { DateTime } from 'luxon'
 import { ScheduleEntry } from './interfaces'
 import pino from 'pino'
+import { ScheduleScrappingOptions } from './types'
 
-export default class Scrapper {
+/**
+ * Class for handling scraping schedule.
+ */
+export default class ScheduleScrapper {
   private readonly browser: Browser
   private readonly log = pino()
 
@@ -12,6 +16,10 @@ export default class Scrapper {
     this.browser = browser
   }
 
+  /**
+   * Method for creating scrapper inside docker container. Still require installed chromium.
+   * @returns created browser instance and scrapper itself
+   */
   public static async dockerRuntime () {
     const browser = await puppeteer.launch({
       headless: true,
@@ -19,27 +27,35 @@ export default class Scrapper {
     })
     return {
       browser,
-      scrapper: new Scrapper(browser)
+      scrapper: new ScheduleScrapper(browser)
     }
   }
 
-  async fetchDay (date: string) {
+  /**
+   * Fetches selected day of schedule from the website.
+   * @param options performance related settings
+   * @returns object with date, fetched data, errored HTM and error rate
+   */
+  async fetchDay (options: ScheduleScrappingOptions = {}) {
     const page = await this.browser.newPage()
     await page.goto('https://planzajec.pjwstk.edu.pl/PlanOgolny3.aspx')
 
     // set date inside browser
-    const datePicker = await page.$('#DataPicker_dateInput')
-    await datePicker?.click()
-    await datePicker?.press('Backspace')
-    await datePicker?.type(date)
-    await datePicker?.press('Enter')
-    await page.waitForTimeout(2000)
+    if (options.dateString) {
+      const datePicker = await page.$('#DataPicker_dateInput')
+      await datePicker?.click()
+      await datePicker?.press('Backspace')
+      await datePicker?.type(options.dateString)
+      await datePicker?.press('Enter')
+      await page.waitForTimeout(2000)
+    }
 
     // find all subjects
     let subjects = await page.$x("//td[contains(@id, ';')]") // works so far, but really fragile solution
-    if (process.env.NODE_ENV === 'development') {
-      subjects = subjects.slice(0, 5)
-      this.log.debug('Reduced subjects to:', subjects.length)
+
+    if (options.skip || options.limit) {
+      subjects = subjects.slice(options.skip, options.limit)
+      this.log.debug('Reduced subjects to: ' + subjects.length)
     }
 
     // enable request interception
@@ -59,23 +75,43 @@ export default class Scrapper {
       }
     })
 
-    // setup progress bar
+    // setup progress tracker
     let progress = 0
-    let errored = 0
+    const errored = []
+
+    const date = options.dateString ?? DateTime.local().toFormat('yyyy-MM-dd')
 
     // iterate over entries
     for (const subject of subjects) {
       try {
         await subject.hover()
-        await page.waitForResponse('https://planzajec.pjwstk.edu.pl/PlanOgolny3.aspx', { timeout: 20000 })
+        await page.waitForResponse('https://planzajec.pjwstk.edu.pl/PlanOgolny3.aspx', { timeout: options.maxTimeout ?? 20000 })
+        this.log.info({ date }, `Downloaded ${++progress} of ${subjects.length} (${Math.round(progress / subjects.length * 100)}%)`)
       } catch (e) {
-        errored++
-        this.log.warn(e)
+        if (e instanceof puppeteer.TimeoutError) {
+          errored.push(subject)
+          this.log.warn(e)
+        }
+        this.log.fatal(e)
       }
-      this.log.info({ date }, `Downloaded ${++progress} of ${subjects.length} (${Math.round(progress / subjects.length * 100)}%)`)
     }
 
-    return { date, entries, errorRate: errored / subjects.length }
+    // retry failed entries
+    if (options.repeatTimeouts ?? true) {
+      while (errored.length) {
+        const subject = errored.pop()!
+        try {
+          this.log.debug({ subject }, 'Retrying fetching subject...')
+          await subject.hover()
+          await page.waitForResponse('https://planzajec.pjwstk.edu.pl/PlanOgolny3.aspx', { timeout: options.maxTimeout ?? 20000 })
+        } catch (e) {
+          this.log.error({ exception: e }, 'Failed to fetch timeouted subject!')
+        }
+      }
+      this.log.info({ date }, `Fetch retried (${Math.round(++progress / subjects.length * 100)}%)`)
+    }
+
+    return { date, entries, errored, errorRate: errored.length / subjects.length }
   }
 
   private dataToEntry (obj: Record<string, string>): ScheduleEntry {

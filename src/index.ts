@@ -1,14 +1,14 @@
 import puppeteer from 'puppeteer'
-import Scrapper from './scrapper'
+import ScheduleScrapper from './scrapper'
 export { ScheduleEntry } from './interfaces'
-export { Scrapper }
+export { ScheduleScrapper as Scrapper }
 
-export async function fetchDay (date: string) {
+export async function fetchDay (date?: string) {
   const browser = await puppeteer.launch({
     headless: true
   })
 
-  const result = await new Scrapper(browser).fetchDay(date)
+  const result = await new ScheduleScrapper(browser).fetchDay({ dateString: date })
   return result
 }
 
@@ -17,10 +17,10 @@ export async function fetchDays (dates: string[]) {
     headless: true
   })
 
-  const scrapper = new Scrapper(browser)
+  const scrapper = new ScheduleScrapper(browser)
   const results = []
   for (const date of dates) {
-    results.push(await scrapper.fetchDay(date))
+    results.push(await scrapper.fetchDay({ dateString: date }))
   }
   return results
 }
