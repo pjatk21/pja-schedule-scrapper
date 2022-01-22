@@ -16,15 +16,22 @@ npm i pja-scrapper
 ## Example
 
 ```ts
-import { fetchDay, fetchDays } from 'pja-scrapper'
+import { Scrapper } from 'pja-scrapper'
 
-(async () => {
-  const a = await fetchDay('2022-01-17')
-  const [b, c] = await fetchDays(['2022-01-18', '2022-01-19'])
+async function testFetch () {
+  const browser = await puppeteer.launch({
+    headless: true
+  })
+  const scrapper = new Scrapper(browser)
+  const result = await scrapper.fetchDay({ dateString: '2022-01-24' })
+  console.log(result)
+}
 
-  console.log(a, b, c)
-})().then(() => process.exit())
+testFetch().then(() => process.exit(0))
+
 ```
 
 ## FAQ
  - Script is running so slow on windows in headless mode: disable windows defender
+ - Timeout warnings: ignore them, those requests will by retried on the end. You can still increase `maxTimeout`.
+ - Is it possible to speed up script?: lower `maxTimeout` 
