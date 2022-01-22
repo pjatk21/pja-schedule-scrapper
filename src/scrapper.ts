@@ -4,7 +4,7 @@ import { DateTime } from 'luxon'
 import { ScheduleEntry } from './interfaces'
 import pino from 'pino'
 import { ScheduleScrappingOptions } from './types'
-import { GroupCoder } from './groupCoder'
+import { GroupCoder, InvalidGroupCodeError } from './groupCoder'
 
 /**
  * Class for handling scraping schedule.
@@ -121,6 +121,20 @@ export default class ScheduleScrapper {
     const begin = DateTime.fromFormat(`${obj['Data zajęć']} ${obj['Godz. rozpoczęcia']}`, 'dd.MM.yyyy HH:mm:ss').toJSDate()
     const end = DateTime.fromFormat(`${obj['Data zajęć']} ${obj['Godz. zakończenia']}`, 'dd.MM.yyyy HH:mm:ss').toJSDate()
     const dateString = DateTime.fromFormat(obj['Data zajęć'], 'dd.MM.yyyy').toFormat('yyyy-MM-dd')
+    let groups
+
+    try {
+      groups = obj.Grupy?.split(', ').map(gc => new GroupCoder().decode(gc))
+    } catch (e) {
+      if (e instanceof InvalidGroupCodeError) {
+        this.log.error({ groupName: e.groupCode }, 'Non-generic group code!')
+      } else {
+        this.log.fatal(e)
+      }
+
+      groups = undefined
+    }
+
     return {
       begin,
       end,
@@ -130,7 +144,7 @@ export default class ScheduleScrapper {
       name: obj['Nazwy przedmiotów'],
       room: obj.Sala,
       tutor: obj.Dydaktycy,
-      groups: obj.Grupy?.split(', ').map(gc => new GroupCoder().decode(gc)),
+      groups,
       building: obj.Budynek
     }
   }
