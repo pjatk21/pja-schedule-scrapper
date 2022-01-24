@@ -1,13 +1,20 @@
 import { GroupDecoded, PJALevel, PJALocations, PJAMasterSubjects, PJAStudyMode } from './types'
 
-export class InvalidGroupCodeError extends Error {}
+export class InvalidGroupCodeError extends Error {
+  groupCode: string
+
+  constructor (groupCode: string) {
+    super(`Invalid group code: ${groupCode}`)
+    this.groupCode = groupCode
+  }
+}
 
 export class GroupCoder {
   private readonly rule = /(?<lmk>[WGB][IGAZLK][sni]) ((?<lvl>I{1,3}|PD)\.(?<sem>\d)|(?<itn>ITN)) (-|(?<spec>(OB\.)?\w+)) (?<grp>\d+)(?<grpl>\w)/
 
   public decode (groupString: string) {
     const { groups } = this.rule.exec(groupString) || {}
-    if (!groups) throw new InvalidGroupCodeError(`Invalid group code: ${groupString}`)
+    if (!groups) throw new InvalidGroupCodeError(groupString)
     const { lmk, lvl, sem, spec, grp, grpl, itn } = groups
     const groupObject: GroupDecoded = {
       location: lmk[0] as PJALocations,

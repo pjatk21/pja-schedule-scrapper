@@ -4,7 +4,7 @@ import { DateTime } from 'luxon'
 import { ScheduleEntry } from './interfaces'
 import pino from 'pino'
 import { ScheduleScrappingOptions } from './types'
-import { GroupCoder } from './groupCoder'
+import { GroupCoder, InvalidGroupCodeError } from './groupCoder'
 
 /**
  * Class for handling scraping schedule.
@@ -38,11 +38,14 @@ export default class ScheduleScrapper {
    * @returns object with date, fetched data, errored HTM and error rate
    */
   async fetchDay (options: ScheduleScrappingOptions = {}) {
+    this.log.info('Open new page')
     const page = await this.browser.newPage()
+    this.log.info('Open schedule page')
     await page.goto('https://planzajec.pjwstk.edu.pl/PlanOgolny3.aspx')
 
     // set date inside browser
     if (options.dateString) {
+      this.log.info('Setting date')
       const datePicker = await page.$('#DataPicker_dateInput')
       await datePicker?.click()
       await datePicker?.press('Backspace')
@@ -53,10 +56,11 @@ export default class ScheduleScrapper {
 
     // find all subjects
     let subjects = await page.$x("//td[contains(@id, ';')]") // works so far, but really fragile solution
+    this.log.info(`Found ${subjects.length} subjects`)
 
     if (options.skip || options.limit) {
       subjects = subjects.slice(options.skip, options.limit)
-      this.log.debug('Reduced subjects to: ' + subjects.length)
+      this.log.info('Reduced subjects to: ' + subjects.length)
     }
 
     // enable request interception
@@ -89,12 +93,13 @@ export default class ScheduleScrapper {
         await page.waitForResponse('https://planzajec.pjwstk.edu.pl/PlanOgolny3.aspx', { timeout: options.maxTimeout ?? 20000 })
         this.log.info({ date }, `Downloaded ${++progress} of ${subjects.length} (${Math.round(progress / subjects.length * 100)}%)`)
       } catch (e) {
-        // @ts-expect-error
+        // @ts-ignore
         if (e.name === 'TimeoutError') {
           errored.push(subject)
-          this.log.warn(e)
+          this.log.warn('Timeout while fetching subject! Will retry later.')
+        } else {
+          this.log.fatal(e)
         }
-        this.log.fatal(e)
       }
     }
 
@@ -121,6 +126,20 @@ export default class ScheduleScrapper {
     const begin = DateTime.fromFormat(`${obj['Data zajęć']} ${obj['Godz. rozpoczęcia']}`, 'dd.MM.yyyy HH:mm:ss').toJSDate()
     const end = DateTime.fromFormat(`${obj['Data zajęć']} ${obj['Godz. zakończenia']}`, 'dd.MM.yyyy HH:mm:ss').toJSDate()
     const dateString = DateTime.fromFormat(obj['Data zajęć'], 'dd.MM.yyyy').toFormat('yyyy-MM-dd')
+    let groups
+
+    try {
+      groups = obj.Grupy?.split(', ').map(gc => new GroupCoder().decode(gc))
+    } catch (e) {
+      if (e instanceof InvalidGroupCodeError) {
+        this.log.error({ groupName: e.groupCode }, 'Non-generic group code!')
+      } else {
+        this.log.fatal(e)
+      }
+
+      groups = undefined
+    }
+
     return {
       begin,
       end,
@@ -130,7 +149,7 @@ export default class ScheduleScrapper {
       name: obj['Nazwy przedmiotów'],
       room: obj.Sala,
       tutor: obj.Dydaktycy,
-      groups: obj.Grupy?.split(', ').map(gc => new GroupCoder().decode(gc)),
+      groups,
       building: obj.Budynek
     }
   }
