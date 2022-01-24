@@ -70,3 +70,8 @@ export type GroupDecoded = {
   groupNumber?: number
   groupLetter?: string
 }
+
+export type CredentialsPair = {
+  studentNumber: string
+  password: string
+}
