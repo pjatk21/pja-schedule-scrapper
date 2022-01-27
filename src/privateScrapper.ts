@@ -27,6 +27,7 @@ export class PrivateScheduleScrapper {
     await passwordInput!.type(this.credentials.password)
     await page.click('#ContentPlaceHolder1_Login1_LoginButton')
     await page.waitForTimeout(2000)
+    this.activePageWeek = page
   }
 
   async fetchCurrentWeek () {
@@ -35,7 +36,7 @@ export class PrivateScheduleScrapper {
 
     for (const subject of subjects) {
       await subject.hover()
-      await this.activePageWeek.waitForResponse('https://planzajec.pjwstk.edu.pl/TwojPlan.aspx', { timeout: 5000 })
+      await this.activePageWeek.waitForResponse('https://planzajec.pjwstk.edu.pl/TwojPlan.aspx', { timeout: 15000 })
     }
   }
 }
