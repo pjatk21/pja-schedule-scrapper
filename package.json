@@ -1,6 +1,6 @@
 {
    "name": "pja-scrapper",
-   "version": "1.1.0-alpha.7",
+   "version": "1.2.0-alpha.1",
    "main": "dist/index.js",
    "types": "dist/index.d.ts",
    "files": [
@@ -20,6 +20,8 @@
       "typescript": "^4.5.2"
    },
    "devDependencies": {
+      "@types/expect": "^24.3.0",
+      "@types/mocha": "^9.1.0",
       "@typescript-eslint/eslint-plugin": "^5.4.0",
       "@typescript-eslint/parser": "^5.4.0",
       "eslint": "^8.3.0",
@@ -27,11 +29,14 @@
       "eslint-plugin-import": "^2.25.4",
       "eslint-plugin-n": "^14.0.0",
       "eslint-plugin-promise": "^6.0.0",
-      "rimraf": "^3.0.2"
+      "mocha": "^9.2.0",
+      "rimraf": "^3.0.2",
+      "ts-mocha": "^9.0.2"
    },
    "scripts": {
       "prepare": "tsc",
       "build": "eslint --fix && rimraf ./dist && tsc",
-      "start": "tsc && node dist/index.js"
+      "start": "tsc && node dist/index.js",
+      "test": "ts-mocha ./src/**/*.spec.ts"
    }
 }
