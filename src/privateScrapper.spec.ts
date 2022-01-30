@@ -1,13 +1,22 @@
-import { describe, it } from 'mocha'
-import puppeteer from 'puppeteer'
+import { describe, it, before } from 'mocha'
+import puppeteer, { Browser } from 'puppeteer'
 import { PrivateScheduleScrapper } from './privateScrapper'
+import 'dotenv/config'
 
 describe('Private Scrapper', () => {
-  it('login and hover', async () => {
-    const browser = await puppeteer.launch({ headless: false })
-    const psc = new PrivateScheduleScrapper(browser, { studentNumber: 's25290', password: '!L0ckp1ck_pjatk' })
-    await psc.login()
-    await psc.fetchCurrentWeek()
-    await browser.close()
+  let browser: Browser
+  let scrapper: PrivateScheduleScrapper
+
+  before(async () => {
+    browser = await puppeteer.launch({ headless: false })
+    scrapper = new PrivateScheduleScrapper(browser, { studentNumber: process.env.STUDENT!, password: process.env.PASSWORD! })
+  })
+
+  it('login', async () => {
+    await scrapper.login()
+  }).timeout(0)
+
+  it('fetch auto loaded week', async () => {
+    await scrapper.fetchCurrentWeek()
   }).timeout(0)
 })

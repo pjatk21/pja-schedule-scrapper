@@ -24,6 +24,7 @@
       "@types/mocha": "^9.1.0",
       "@typescript-eslint/eslint-plugin": "^5.4.0",
       "@typescript-eslint/parser": "^5.4.0",
+      "dotenv": "^14.3.2",
       "eslint": "^8.3.0",
       "eslint-config-standard": "https://github.com/standard/eslint-config-standard",
       "eslint-plugin-import": "^2.25.4",
