@@ -38,7 +38,7 @@ export default class ScheduleScrapper {
    * @returns object with date, fetched data, errored HTM and error rate
    */
   async fetchDay (options: ScheduleScrappingOptions = {}) {
-    this.log.info('Open new page')
+    this.log.debug('Open new page')
     const page = await this.browser.newPage()
     this.log.debug('Open schedule page')
     await page.goto('https://planzajec.pjwstk.edu.pl/PlanOgolny3.aspx')
