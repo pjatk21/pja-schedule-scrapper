@@ -58,6 +58,30 @@ export default class ScheduleScrapper {
     let subjects = await page.$x("//td[contains(@id, ';')]") // works so far, but really fragile solution
     this.log.debug(`Found ${subjects.length} subjects`)
 
+    if (options.filter) {
+      const subjectsFiltered = []
+
+      for (const subject of subjects) {
+        const preview = await page.evaluate(el => el.innerText, subject) as string
+
+        // Try extracting group name from preview
+        const inlinePreview = preview.replaceAll(/\s/g, ' ')
+
+        let group
+        try {
+          group = new GroupCoder().decode(inlinePreview)
+        } catch (e) {
+          group = undefined
+        }
+
+        if (options.filter({ preview, inlinePreview, raw: subject, group })) {
+          subjectsFiltered.push(subject)
+        }
+      }
+
+      subjects = subjectsFiltered
+    }
+
     if (options.skip || options.limit) {
       subjects = subjects.slice(options.skip, options.limit)
       this.log.debug('Reduced subjects to: ' + subjects.length)
