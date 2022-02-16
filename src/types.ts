@@ -25,7 +25,7 @@ export enum PJALevel {
   FIRST = 'I',
   SECOND = 'II',
   THIRD = 'III',
-  PD = 'PD'
+  PD = 'PD',
 }
 
 /*
@@ -49,6 +49,7 @@ export type GroupDecoded = {
   specialization?: string
   groupNumber?: number
   groupLetter?: string
+  raw: string
 }
 
 export type CredentialsPair = {
@@ -74,5 +75,10 @@ export type ScheduleScrappingOptions = {
   maxTimeout?: number
   limit?: number
   skip?: number
-  filter?: (entry: { preview: string, inlinePreview: string, raw: any, group?: GroupDecoded }) => boolean
+  filter?: (entry: {
+    preview: string
+    inlinePreview: string
+    raw: any
+    group?: GroupDecoded
+  }) => boolean
 }

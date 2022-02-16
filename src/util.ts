@@ -1,6 +1,6 @@
 import { JSDOM } from 'jsdom'
 
-export function multiLinesIntoObject (input: string): Record<string, string> {
+export function multiLinesIntoObject(input: string): Record<string, string> {
   const lines = input.split('\n')
   const result = Object()
   for (let i = 0; i < lines.length; i += 2) {
@@ -13,7 +13,7 @@ export function multiLinesIntoObject (input: string): Record<string, string> {
   return result
 }
 
-export function serializeOutput (data: string) {
+export function serializeOutput(data: string) {
   const html = data.split('|')[7]
   const fragment = JSDOM.fragment(html) // just 7, just csv things
 

@@ -19,7 +19,12 @@ describe('Common schedule scrapper', () => {
   })
 
   it('fetch (filter)', async () => {
-    const { errored } = await scrapper.fetchDay({ dateString: '2022-01-25', filter: ({ inlinePreview, group }) => inlinePreview.includes('PPJ') && group?.location === PJALocations.WARSAW })
+    const { errored } = await scrapper.fetchDay({
+      dateString: '2022-01-25',
+      filter: ({ inlinePreview, group }) =>
+        inlinePreview.includes('PPJ') &&
+        group?.location === PJALocations.WARSAW,
+    })
     assert.equal(errored.length, 0)
   }).timeout(0)
 

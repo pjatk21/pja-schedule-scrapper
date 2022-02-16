@@ -10,7 +10,10 @@ describe('Private Scrapper', () => {
 
   before(async () => {
     browser = await puppeteer.launch({ headless: false })
-    scrapper = new PrivateScheduleScrapper(browser, { studentNumber: process.env.STUDENT!, password: process.env.PASSWORD! })
+    scrapper = new PrivateScheduleScrapper(browser, {
+      studentNumber: process.env.STUDENT!,
+      password: process.env.PASSWORD!,
+    })
   })
 
   it('login', async () => {

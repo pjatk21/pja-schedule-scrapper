@@ -13,13 +13,14 @@ export class PrivateScheduleScrapper {
   private readonly credentials: CredentialsPair
   private activePageWeek?: Page
 
-  constructor (browser: Browser, credentials: CredentialsPair) {
+  constructor(browser: Browser, credentials: CredentialsPair) {
     this.browser = browser
-    if (!credentials.studentNumber.match(/s\d+/)) throw new InvalidStudentNumber(credentials.studentNumber)
+    if (!credentials.studentNumber.match(/s\d+/))
+      throw new InvalidStudentNumber(credentials.studentNumber)
     this.credentials = credentials
   }
 
-  async login () {
+  async login() {
     const page = await this.browser.newPage()
     await page.goto('https://planzajec.pjwstk.edu.pl/Logowanie.aspx')
     const usernameInput = await page.$('#ContentPlaceHolder1_Login1_UserName')
@@ -31,31 +32,37 @@ export class PrivateScheduleScrapper {
     this.activePageWeek = page
   }
 
-  async fetchCurrentWeek () {
+  async fetchCurrentWeek() {
     if (!this.activePageWeek) throw new NotLoggedIn()
     const subjects = await this.activePageWeek.$$('.rsAptSubject')
 
     for (const subject of subjects) {
       await subject.hover()
-      await this.activePageWeek.waitForResponse('https://planzajec.pjwstk.edu.pl/TwojPlan.aspx', { timeout: 15000 })
+      await this.activePageWeek.waitForResponse(
+        'https://planzajec.pjwstk.edu.pl/TwojPlan.aspx',
+        { timeout: 15000 }
+      )
     }
   }
 
-  async getDateRange () {
+  async getDateRange() {
     const headerText = await this.activePageWeek?.$('.rsHeader h2')
-    const text = await headerText?.evaluate(node => node.textContent)
+    const text = await headerText?.evaluate((node) => node.textContent)
     if (text === null || text === undefined) return null
     const [start, end] = text.split(' - ')
-    return { start: DateTime.fromFormat(start.trim(), 'dd.MM.yyyy'), end: DateTime.fromFormat(end.trim(), 'dd.MM.yyyy') }
+    return {
+      start: DateTime.fromFormat(start.trim(), 'dd.MM.yyyy'),
+      end: DateTime.fromFormat(end.trim(), 'dd.MM.yyyy'),
+    }
   }
 
-  async loadNextWeek () {
+  async loadNextWeek() {
     const nextWeekButton = await this.activePageWeek?.$('.rsNextDay')
     await nextWeekButton?.click()
     await this.activePageWeek?.waitForTimeout(2000)
   }
 
-  async loadPrevWeek () {
+  async loadPrevWeek() {
     const nextWeekButton = await this.activePageWeek?.$('.rsPrevDay')
     await nextWeekButton?.click()
     await this.activePageWeek?.waitForTimeout(2000)

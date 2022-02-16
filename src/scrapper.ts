@@ -13,7 +13,7 @@ export default class ScheduleScrapper {
   private readonly browser: Browser
   private readonly log = pino()
 
-  constructor (browser: Browser) {
+  constructor(browser: Browser) {
     this.browser = browser
   }
 
@@ -21,14 +21,14 @@ export default class ScheduleScrapper {
    * Method for creating scrapper inside docker container. Still require installed chromium.
    * @returns created browser instance and scrapper itself
    */
-  public static async dockerRuntime () {
+  public static async dockerRuntime() {
     const browser = await puppeteer.launch({
       headless: true,
-      args: ['--disable-dev-shm-usage']
+      args: ['--disable-dev-shm-usage'],
     })
     return {
       browser,
-      scrapper: new ScheduleScrapper(browser)
+      scrapper: new ScheduleScrapper(browser),
     }
   }
 
@@ -37,7 +37,7 @@ export default class ScheduleScrapper {
    * @param options performance related settings
    * @returns object with date, fetched data, errored HTM and error rate
    */
-  async fetchDay (options: ScheduleScrappingOptions = {}) {
+  async fetchDay(options: ScheduleScrappingOptions = {}) {
     this.log.debug('Open new page')
     const page = await this.browser.newPage()
     this.log.debug('Open schedule page')
@@ -62,7 +62,10 @@ export default class ScheduleScrapper {
       const subjectsFiltered = []
 
       for (const subject of subjects) {
-        const preview = await page.evaluate(el => el.innerText, subject) as string
+        const preview = (await page.evaluate(
+          (el) => el.innerText,
+          subject
+        )) as string
 
         // Try extracting group name from preview
         const inlinePreview = preview.replaceAll(/\s/g, ' ')
@@ -95,12 +98,10 @@ export default class ScheduleScrapper {
     const entries: ScheduleEntry[] = []
 
     // create listener for each entry
-    page.on('response', async event => {
+    page.on('response', async (event) => {
       if (event.url() === 'https://planzajec.pjwstk.edu.pl/PlanOgolny3.aspx') {
         const data = serializeOutput(await event.text()) ?? {}
-        entries.push(
-          this.dataToEntry(data)
-        )
+        entries.push(this.dataToEntry(data))
       }
     })
 
@@ -114,8 +115,16 @@ export default class ScheduleScrapper {
     for (const subject of subjects) {
       try {
         await subject.hover()
-        await page.waitForResponse('https://planzajec.pjwstk.edu.pl/PlanOgolny3.aspx', { timeout: options.maxTimeout ?? 20000 })
-        this.log.debug({ date }, `Downloaded ${++progress} of ${subjects.length} (${Math.round(progress / subjects.length * 100)}%)`)
+        await page.waitForResponse(
+          'https://planzajec.pjwstk.edu.pl/PlanOgolny3.aspx',
+          { timeout: options.maxTimeout ?? 20000 }
+        )
+        this.log.debug(
+          { date },
+          `Downloaded ${++progress} of ${subjects.length} (${Math.round(
+            (progress / subjects.length) * 100
+          )}%)`
+        )
       } catch (e) {
         // @ts-ignore
         if (e.name === 'TimeoutError') {
@@ -134,26 +143,46 @@ export default class ScheduleScrapper {
         try {
           this.log.debug({ subject })
           await subject.hover()
-          await page.waitForResponse('https://planzajec.pjwstk.edu.pl/PlanOgolny3.aspx', { timeout: 30000 })
+          await page.waitForResponse(
+            'https://planzajec.pjwstk.edu.pl/PlanOgolny3.aspx',
+            { timeout: 30000 }
+          )
           this.log.debug('Retry succeeded!')
         } catch (e) {
           this.log.error({ exception: e }, 'Failed to fetch timeouted subject!')
         }
-        this.log.debug({ date }, `Fetch retried (${Math.round(++progress / subjects.length * 100)}%)`)
+        this.log.debug(
+          { date },
+          `Fetch retried (${Math.round((++progress / subjects.length) * 100)}%)`
+        )
       }
     }
 
-    return { date, entries, errored, errorRate: errored.length / subjects.length }
+    return {
+      date,
+      entries,
+      errored,
+      errorRate: errored.length / subjects.length,
+    }
   }
 
-  private dataToEntry (obj: Record<string, string>): ScheduleEntry {
-    const begin = DateTime.fromFormat(`${obj['Data zajęć']} ${obj['Godz. rozpoczęcia']}`, 'dd.MM.yyyy HH:mm:ss').toJSDate()
-    const end = DateTime.fromFormat(`${obj['Data zajęć']} ${obj['Godz. zakończenia']}`, 'dd.MM.yyyy HH:mm:ss').toJSDate()
-    const dateString = DateTime.fromFormat(obj['Data zajęć'], 'dd.MM.yyyy').toFormat('yyyy-MM-dd')
+  private dataToEntry(obj: Record<string, string>): ScheduleEntry {
+    const begin = DateTime.fromFormat(
+      `${obj['Data zajęć']} ${obj['Godz. rozpoczęcia']}`,
+      'dd.MM.yyyy HH:mm:ss'
+    ).toJSDate()
+    const end = DateTime.fromFormat(
+      `${obj['Data zajęć']} ${obj['Godz. zakończenia']}`,
+      'dd.MM.yyyy HH:mm:ss'
+    ).toJSDate()
+    const dateString = DateTime.fromFormat(
+      obj['Data zajęć'],
+      'dd.MM.yyyy'
+    ).toFormat('yyyy-MM-dd')
     let groups
 
     try {
-      groups = obj.Grupy?.split(', ').map(gc => new GroupCoder().decode(gc))
+      groups = obj.Grupy?.split(', ').map((gc) => new GroupCoder().decode(gc))
     } catch (e) {
       if (e instanceof InvalidGroupCodeError) {
         this.log.error({ groupName: e.groupCode }, 'Non-generic group code!')
@@ -174,7 +203,7 @@ export default class ScheduleScrapper {
       room: obj.Sala,
       tutor: obj.Dydaktycy,
       groups,
-      building: obj.Budynek
+      building: obj.Budynek,
     }
   }
 }
