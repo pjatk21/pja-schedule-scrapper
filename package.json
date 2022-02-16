@@ -41,6 +41,6 @@
       "prepare": "tsc",
       "build": "eslint --fix && rimraf ./dist && tsc",
       "start": "tsc && node dist/index.js",
-      "test": "ts-mocha ./src/**/*.spec.ts"
+      "test": "ts-mocha ./src/**/*.spec.ts --exit"
    }
 }

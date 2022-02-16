@@ -3,6 +3,7 @@ import puppeteer, { Browser } from 'puppeteer'
 import ScheduleScrapper from './scrapper'
 import 'dotenv/config'
 import assert from 'assert'
+import { PJALocations } from './types'
 
 describe('Common schedule scrapper', () => {
   let browser: Browser
@@ -16,6 +17,11 @@ describe('Common schedule scrapper', () => {
   afterEach(async () => {
     await browser.close()
   })
+
+  it('fetch (filter)', async () => {
+    const { errored } = await scrapper.fetchDay({ dateString: '2022-01-25', filter: ({ inlinePreview, group }) => inlinePreview.includes('PPJ') && group?.location === PJALocations.WARSAW })
+    assert.equal(errored.length, 0)
+  }).timeout(0)
 
   it('fetch (short)', async () => {
     const { errored } = await scrapper.fetchDay({ skip: 10, limit: 20 })

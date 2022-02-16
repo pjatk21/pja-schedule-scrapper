@@ -1,6 +1,7 @@
 import pino from 'pino'
 import { Browser, Page } from 'puppeteer'
 import { CredentialsPair } from './types'
+import { DateTime } from 'luxon'
 
 export class InvalidStudentNumber extends Error {}
 
@@ -38,5 +39,25 @@ export class PrivateScheduleScrapper {
       await subject.hover()
       await this.activePageWeek.waitForResponse('https://planzajec.pjwstk.edu.pl/TwojPlan.aspx', { timeout: 15000 })
     }
+  }
+
+  async getDateRange () {
+    const headerText = await this.activePageWeek?.$('.rsHeader h2')
+    const text = await headerText?.evaluate(node => node.textContent)
+    if (text === null || text === undefined) return null
+    const [start, end] = text.split(' - ')
+    return { start: DateTime.fromFormat(start.trim(), 'dd.MM.yyyy'), end: DateTime.fromFormat(end.trim(), 'dd.MM.yyyy') }
+  }
+
+  async loadNextWeek () {
+    const nextWeekButton = await this.activePageWeek?.$('.rsNextDay')
+    await nextWeekButton?.click()
+    await this.activePageWeek?.waitForTimeout(2000)
+  }
+
+  async loadPrevWeek () {
+    const nextWeekButton = await this.activePageWeek?.$('.rsPrevDay')
+    await nextWeekButton?.click()
+    await this.activePageWeek?.waitForTimeout(2000)
   }
 }
