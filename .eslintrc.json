@@ -8,5 +8,8 @@
     ],
     "env": {
         "node": true
+    },
+    "rules": {
+        "prettier/prettier": "warn"
     }
 }
