@@ -75,6 +75,10 @@ export type ScheduleScrappingOptions = {
   maxTimeout?: number
   limit?: number
   skip?: number
+  /**
+   * If set to false, returns page object, otherwise closes it and doesn't return it
+   */
+  closePage?: boolean
   filter?: (entry: {
     preview: string
     inlinePreview: string

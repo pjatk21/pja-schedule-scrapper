@@ -1,8 +1,8 @@
-import puppeteer, { Browser } from 'puppeteer'
+import puppeteer, { Browser, Page } from 'puppeteer'
 import { serializeOutput } from './util'
 import { DateTime } from 'luxon'
 import { ScheduleEntry } from './interfaces'
-import pino from 'pino'
+import type { Logger } from 'pino'
 import { ScheduleScrappingOptions } from './types'
 import { GroupCoder, InvalidGroupCodeError } from './groupCoder'
 
@@ -11,7 +11,7 @@ import { GroupCoder, InvalidGroupCodeError } from './groupCoder'
  */
 export default class ScheduleScrapper {
   private readonly browser: Browser
-  private readonly log = pino()
+  public log?: Logger
 
   constructor(browser: Browser) {
     this.browser = browser
@@ -32,20 +32,45 @@ export default class ScheduleScrapper {
     }
   }
 
+  public static async userRuntime() {
+    const browser = await puppeteer.launch({
+      headless: false,
+    })
+    return {
+      browser,
+      scrapper: new ScheduleScrapper(browser),
+    }
+  }
+
+  /**
+   * Calculates ETA
+   * @param start
+   * @param iterations
+   * @returns Estimated fetch time in milliseconds
+   */
+  private eta(
+    start: DateTime,
+    iterations: number,
+    collectionSize: number
+  ): number {
+    const avgTime = DateTime.now().diff(start).milliseconds / iterations
+    return avgTime * (collectionSize - iterations)
+  }
+
   /**
    * Fetches selected day of schedule from the website.
    * @param options performance related settings
    * @returns object with date, fetched data, errored HTM and error rate
    */
   async fetchDay(options: ScheduleScrappingOptions = {}) {
-    this.log.debug('Open new page')
+    this.log?.debug('Open new page')
     const page = await this.browser.newPage()
-    this.log.debug('Open schedule page')
+    this.log?.debug('Open schedule page')
     await page.goto('https://planzajec.pjwstk.edu.pl/PlanOgolny3.aspx')
 
     // set date inside browser
     if (options.dateString) {
-      this.log.debug('Setting date')
+      this.log?.info(`Setting date ${options.dateString}`)
       const datePicker = await page.$('#DataPicker_dateInput')
       await datePicker?.click()
       await datePicker?.press('Backspace')
@@ -56,7 +81,7 @@ export default class ScheduleScrapper {
 
     // find all subjects
     let subjects = await page.$x("//td[contains(@id, ';')]") // works so far, but really fragile solution
-    this.log.debug(`Found ${subjects.length} subjects`)
+    this.log?.info(`Found ${subjects.length} subjects`)
 
     if (options.filter) {
       const subjectsFiltered = []
@@ -87,7 +112,7 @@ export default class ScheduleScrapper {
 
     if (options.skip || options.limit) {
       subjects = subjects.slice(options.skip, options.limit)
-      this.log.debug('Reduced subjects to: ' + subjects.length)
+      this.log?.info('Reduced subjects to: ' + subjects.length)
     }
 
     // enable request interception
@@ -110,6 +135,7 @@ export default class ScheduleScrapper {
     const errored = []
 
     const date = options.dateString ?? DateTime.local().toFormat('yyyy-MM-dd')
+    const start = DateTime.now()
 
     // iterate over entries
     for (const subject of subjects) {
@@ -117,45 +143,61 @@ export default class ScheduleScrapper {
         await subject.hover()
         await page.waitForResponse(
           'https://planzajec.pjwstk.edu.pl/PlanOgolny3.aspx',
-          { timeout: options.maxTimeout ?? 20000 }
+          { timeout: options.maxTimeout ?? 5000 }
         )
-        this.log.debug(
-          { date },
-          `Downloaded ${++progress} of ${subjects.length} (${Math.round(
+
+        this.log?.debug(
+          {
+            date,
+            iteration: ++progress,
+            eta: this.eta(start, progress, subjects.length),
+          },
+          `Downloaded ${progress} of ${subjects.length} (${Math.round(
             (progress / subjects.length) * 100
           )}%)`
         )
       } catch (e) {
-        // @ts-ignore
+        // @ts-expect-error just some fucking weird JS wizardry
         if (e.name === 'TimeoutError') {
           errored.push(subject)
-          this.log.warn('Timeout while fetching subject! Will retry later.')
+          this.log?.warn('Timeout while fetching subject! Will retry later.')
         } else {
-          this.log.fatal(e)
+          this.log?.fatal(e)
         }
       }
     }
+
+    this.log?.info(
+      `${progress} of ${subjects.length} subjects fetched, performing cleanup/repeating timeouted requests`
+    )
 
     // retry failed entries
     if (options.repeatTimeouts ?? true) {
       while (errored.length) {
         const subject = errored.pop()!
         try {
-          this.log.debug({ subject })
+          this.log?.debug('Retrying fetching subject!')
           await subject.hover()
           await page.waitForResponse(
             'https://planzajec.pjwstk.edu.pl/PlanOgolny3.aspx',
             { timeout: 30000 }
           )
-          this.log.debug('Retry succeeded!')
+          this.log?.debug('Retry succeeded!')
         } catch (e) {
-          this.log.error({ exception: e }, 'Failed to fetch timeouted subject!')
+          this.log?.error(
+            { exception: e },
+            'Failed to fetch timeouted subject!'
+          )
         }
-        this.log.debug(
+        this.log?.debug(
           { date },
           `Fetch retried (${Math.round((++progress / subjects.length) * 100)}%)`
         )
       }
+    }
+
+    if (options.closePage ?? true) {
+      await page.close({ runBeforeUnload: true })
     }
 
     return {
@@ -163,6 +205,7 @@ export default class ScheduleScrapper {
       entries,
       errored,
       errorRate: errored.length / subjects.length,
+      page: options.closePage ?? true ? undefined : page,
     }
   }
 
@@ -185,9 +228,9 @@ export default class ScheduleScrapper {
       groups = obj.Grupy?.split(', ').map((gc) => new GroupCoder().decode(gc))
     } catch (e) {
       if (e instanceof InvalidGroupCodeError) {
-        this.log.error({ groupName: e.groupCode }, 'Non-generic group code!')
+        this.log?.error({ groupName: e.groupCode }, 'Non-generic group code!')
       } else {
-        this.log.fatal(e)
+        this.log?.fatal(e)
       }
 
       groups = undefined
