@@ -1,4 +1,4 @@
-import puppeteer, { Browser, Page } from 'puppeteer'
+import puppeteer, { Browser } from 'puppeteer'
 import { serializeOutput } from './util'
 import { DateTime } from 'luxon'
 import { ScheduleEntry } from './interfaces'
