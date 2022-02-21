@@ -24,7 +24,7 @@ export default class ScheduleScrapper {
   public static async dockerRuntime() {
     const browser = await puppeteer.launch({
       headless: true,
-      args: ['--disable-dev-shm-usage'],
+      args: ['--disable-dev-shm-usage --no-sandbox'],
     })
     return {
       browser,

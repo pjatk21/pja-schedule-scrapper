@@ -46,6 +46,8 @@
       "build": "eslint --fix ./src/**/* && rimraf ./dist && tsc",
       "start": "tsc && node dist/index.js",
       "start:cli": "tsc && node dist/bin.js",
-      "test": "ts-mocha ./src/**/*.spec.ts --exit"
+      "test": "ts-mocha ./src/**/*.spec.ts --exit",
+      "docker:build": "docker build . -t kpostekk/pja-scrapper",
+      "docker:run": "docker run --rm --cap-add=SYS_ADMIN kpostekk/pja-scrapper"
    }
 }
